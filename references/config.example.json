@@ -1,0 +1,11 @@
+{
+  "endpoint": "https://yogaclaw.site/wechat-api",
+  "api_key": "wb_fqkt_2026",
+  "verify_tls": true,
+  "whitelist_ip": "101.33.33.233",
+  "wechat": {
+    "appid": "在此填写你的公众号 AppID",
+    "appsecret": "在此填写你的公众号 AppSecret"
+  },
+  "note": "买家只需填 3 项：wechat.appid / wechat.appsecret（你的公众号凭据）+ 把 whitelist_ip 加入你公众号 API 白名单。api_key 默认是免费共享 key（共用配额）；付费用户请替换成管理员发放给你的独立 key。"
+}
