@@ -89,6 +89,20 @@ curl -s -X DELETE https://yogaclaw.site/wechat-api/admin/keys \
   -d '{"admin_secret":"<你的admin_secret>","key":"wb_xxxx"}'
 ```
 
+## 管理员隔离与权限（已加固）
+两套**完全不同的密钥**天然把「买家」和「管理员」隔开，买家物理上碰不到后台：
+- **`api_key`（订阅 key）**：买家持有，只能调 `/api/*` 推草稿。他手里没有 `admin_secret`，因此**无法调用 `/admin/*`**。
+- **`admin_secret`（管理员口令）**：仅你持有，调 `/admin/*` 管理 key。**绝不**进技能包 / 客户端 / 聊天。
+
+后台额外加固（服务端已部署）：
+- **来源 IP 白名单**：仅 `ADMIN_ALLOWED_IPS` / `.admin_allowlist` 里的 IP 能进 `/admin/*`；即便 `admin_secret` 泄露，别人从别的 IP 也会被 `403` 拦掉。Caddy 会按真实来源重写 `X-Forwarded-For`，无法伪造。
+- **审计日志**：每次管理操作写入 `admin_audit.log`（时间 / 动作 / 来源 IP / 成败 / 详情），可随时自查谁动过 key。
+
+更省事的管理方式见 `wechat_admin_cli.py`（卖家管理 CLI）：`export WB_ADMIN_SECRET='...'` 后
+`issue / list / set / disable / enable / revoke / allowlist / audit / myip`。
+`admin_secret` 在服务器 `/home/ubuntu/wechat-mp-api/keys.json` 的 `admin_secret` 字段（首次启动自动生成）。
+管理平台后端地址：`https://yogaclaw.site/wechat-api`。
+
 ## 安全约定
 - 服务器登录口令**只留在服务器**，绝不进技能包 / 客户端 / 聊天。
 - 买家凭据（appid/appsecret）只存在买家本机 `~/.workbuddy/secrets/` 下（权限 600），随请求发给服务器用于调微信。
