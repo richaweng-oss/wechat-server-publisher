@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "wechat-draft-publisher": {
+      "command": "python3",
+      "args": ["/ABS/PATH/wechat-server-publisher/scripts/wechat_mcp_server.py"],
+      "env": {
+        "WECHAT_API_KEY": "wb_fqkt_2026",
+        "WECHAT_APPID": "你的公众号AppID",
+        "WECHAT_APPSECRET": "你的公众号AppSecret",
+        "WECHAT_API_ENDPOINT": "https://yogaclaw.site/wechat-api",
+        "WECHAT_VERIFY_TLS": "true"
+      }
+    }
+  }
+}
