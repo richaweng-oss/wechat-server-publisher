@@ -1,6 +1,6 @@
 ---
 name: wechat-server-publisher
-description: 公众号图文生成后，经由一台固定公网 IP 的腾讯云服务器（白名单代理）推送到微信草稿箱。当用户要"把图文发到公众号草稿箱 / 推送到公众号 / 发布到微信"且遇到本地 IP 变动导致微信 API 白名单失效时，使用本技能。真正的微信调用全部在已加白名单的服务器上执行，买家只需填自己的 AppID/AppSecret 与白名单 IP 三项即可。售卖模型：免费用户共用一份共享配额，付费用户领取独立 key 与独立配额。
+description: 公众号图文生成后，经由一台固定公网 IP 的腾讯云服务器（白名单代理）推送到微信草稿箱。当用户要"把图文发到公众号草稿箱 / 推送到公众号 / 发布到微信"且遇到本地 IP 变动导致微信 API 白名单失效时，使用本技能。真正的微信调用全部在已加白名单的服务器上执行，买家只需填自己的 AppID/AppSecret 与白名单 IP 三项即可。售卖模型：免费用户共用一份共享配额，付费用户领取独立 key 与独立配额。跨客户端通用：除 WorkBuddy 外，还提供标准 MCP Server（scripts/wechat_mcp_server.py），可被 Trae / Codex / Claude / Cline / Cursor / 阿里云百炼 / Kimi 开放平台 / 通义千问智能体 等任意支持 MCP 的客户端一键接入。
 ---
 
 # wechat-server-publisher（公众号草稿·服务器白名单代理版·多租户·配额）
@@ -108,3 +108,39 @@ curl -s -X DELETE https://yogaclaw.site/wechat-api/admin/keys \
 - 买家凭据（appid/appsecret）只存在买家本机 `~/.workbuddy/secrets/` 下（权限 600），随请求发给服务器用于调微信。
 - `api_key` 由管理员发放；免费用户共用共享 key，付费用户领取独立 key，均可随时吊销。
 - `admin_secret` 仅你（卖家）持有，用于管理后台；请勿泄露。
+
+## 跨客户端：MCP Server（Trae / Codex / 千问 / 百炼 / Kimi 通用）
+
+核心能力不锁 WorkBuddy——它本质是一个 HTTP API + 一个纯标准库客户端。**任何能发 HTTPS 请求的客户端都能用**，
+已额外封装成标准 MCP Server（`scripts/wechat_mcp_server.py`），让支持 MCP 的 Agent 自己调。
+
+暴露的 7 个工具：`wechat_health_check` / `wechat_upload_image` / `wechat_upload_cover` /
+`wechat_push_draft` / `wechat_push_article` / `wechat_publish` / `wechat_list_drafts`。
+
+**为什么跨平台都成立**：微信只认服务器固定 IP `101.33.33.233`，客户端（WorkBuddy / Trae / Codex 沙盒 / 千问云端解释器）
+只要能访问 `yogaclaw.site` 即可，IP 白名单痛点与客户端无关。
+
+**平台支持矩阵**：
+
+| 客户端 | 接入方式 | 开箱即用 |
+|--------|----------|----------|
+| WorkBuddy | 导入本技能包 | ✅ |
+| Trae（字节 AI IDE） | 本地 stdio MCP，或 `.trae/mcp.json` | ✅ |
+| Codex（OpenAI） | 本地 stdio MCP（沙盒首访 `yogaclaw.site` 需批准一次） | ✅（首次批准网络） |
+| Claude / Cline / Cursor | stdio MCP（见 `references/mcp_config.example.json`） | ✅ |
+| 阿里云百炼 / Kimi 开放平台 / 通义千问智能体 | 远端 SSE：`python3 wechat_mcp_server.py --transport sse --port 8765` 后挂 URL | ✅（需部署 SSE 端点） |
+
+**运行**：
+
+```bash
+# 本地 stdio（Trae / Claude / Cline 挂 MCP 用）
+python3 scripts/wechat_mcp_server.py
+
+# 远端 SSE（百炼 / Kimi / 通义智能体 等云端 Agent 用）
+python3 scripts/wechat_mcp_server.py --transport sse --host 0.0.0.0 --port 8765
+```
+
+**配置**（环境变量，或缺省读 `~/.workbuddy/secrets/wechat_publisher.json`）：
+`WECHAT_API_ENDPOINT`（默认 `https://yogaclaw.site/wechat-api`）、`WECHAT_API_KEY`、`WECHAT_APPID`、`WECHAT_APPSECRET`、`WECHAT_VERIFY_TLS`。
+配置示例见 `references/mcp_config.example.json`。依赖：`pip install mcp`（需 mcp>=2.0，`FastMCP` 已更名为 `MCPServer`，代码已兼容）。
+
